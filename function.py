@@ -123,8 +123,8 @@ def cal_derivative(W_w, W_u, x, y):
     sig = sigmoid(np.dot(W_w, x))
     mlr = np.dot(eux, sig)
     prob_scalar =  - (y - mlr) / (mlr * (1 - mlr))
-    dir_U = np.outer(prob_scalar * eux*(sig - mlr), x)
-    dir_W = np.outer(prob_scalar * sig* (1 - sig) * eux, x)
+    dir_U = np.outer(prob_scalar * eux * (sig - mlr), x)
+    dir_W = np.outer(prob_scalar * sig * (1 - sig) * eux, x)
     return dir_W, dir_U
 
 
