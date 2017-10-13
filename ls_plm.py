@@ -170,5 +170,8 @@ class LSPLM:
     def predict(self, X):
         return np.array(self._predict(X) > 0.5, dtype = int)
 
+    def check(loss_before, loss_now):
+        return abs(loss_before - loss_now) / loss_now < 0.01
+
 
 

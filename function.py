@@ -102,6 +102,7 @@ def calNorm1(weight):
     """
     return np.abs(weight).sum()
 
+
 def calDimension21(W):
     """
         计算每一个维度的L2
@@ -282,7 +283,7 @@ def backTrackingLineSearch(X, y, weight_W, weight_U,norm21, norm1, pW, pU):
     alpha = 1.0
     c = 0.5
     tao = 0.9
-    LW, LU = sumCalDerivative(weight_W, weight_U, X, y):
+    LW, LU = sumCalDerivative(weight_W, weight_U, X, y)
     m = (pW * LW + pU * LU).sum()
     t = - c * m
     loss = calLoss(X, y, weight_W, weight_U, norm21, norm1)
