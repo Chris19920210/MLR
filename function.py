@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import numpy as np
 import time
 import copy
@@ -50,17 +49,13 @@ def softmax(x):
 
 def calLoss(X, y, weight_W, weight_U, norm21, norm1):
     """
-        计算loss
     :param data:
     :param weight_W:
     :param weight_U:
     :return:
     """
-    #混合逻辑回归的loss
     functionLoss = calFunctionLoss(weight_W, weight_U, X, y)
-    #L21正则的loss
     norm21Loss = calNorm21(weight_W + weight_U)
-    #L1正则的loss
     norm1Loss = calNorm1(weight_W + weight_U)
     print(functionLoss , norm21 * norm21Loss , norm1 * norm1Loss)
     return functionLoss + norm21 * norm21Loss + norm1 * norm1Loss
@@ -102,7 +97,6 @@ def calNorm1(weight):
     """
     return np.abs(weight).sum()
 
-
 def calDimension21(W):
     """
         计算每一个维度的L2
@@ -130,7 +124,6 @@ def cal_derivative(W_w, W_u, x, y):
 
 
 def sumCalDerivative(WW, WU, X, y):
-    # 计算所有样本的梯度和(所有样本的一阶导数和），weight为负样本数/正样本数。
     all = map(lambda (x,y): cal_derivative(WW, WU,x, y), zip(X,y))
     LW, LU = reduce(lambda x, y: (x[0] + y[0], x[1] + y[1]),all,(0,0))
     return LW, LU
@@ -164,8 +157,6 @@ def virtualGradient(WW, WU, GW, GU,beta,lamb):
 
 def calV(L, beta):
     """
-        计算v，包括wv， uv，这里是分别计算的
-        （可以和到一起算，因为w，u一直都是分着算的，所以这里也分着算了。重构的时候再优化吧）
     :param LW:
     :param LU:
     :param beta:
@@ -177,18 +168,6 @@ def calV(L, beta):
     return V*np.sign(-L)
 
 def calDij(L, W, V, D21, sumVD21, beta, lamb):
-    """
-    分三种情况讨论，并计算d_i
-    :param L:  loss of θ, matrix
-    :param W:  weight,θ, matrix
-    :param V: v , matrix
-    :param D21: norm21, W_i·  of W , vector
-    :param sumVD21:  norm21, value
-    :param beta:
-    :param lamb:
-    :param feaNum:
-    :return:
-    """
     mask1 = (W != 0)
     mask2 = (W == 0) * np.tile((D21 != 0), (len(W),1))
     mask3 = np.tile((D21 == 0), (len(W),1))
@@ -196,15 +175,16 @@ def calDij(L, W, V, D21, sumVD21, beta, lamb):
     D21_tmp[D21_tmp == 0] = 1
     s = - L - lamb * W / D21_tmp
     cond1 =  s - beta * np.sign(W)
-    cond2 = np.maximum(np.abs(s) - beta, 0)*np.sign(s)
-    cond3 = V * max(sumVD21 - lamb, 0) /sumVD21
+    cond2 = np.maximum(np.abs(s) - beta, 0.0)*np.sign(s)
+    if (sumVD21 != 0 ):
+        cond3 = V * (max(sumVD21 - lamb, 0.0) / sumVD21)
+    else:
+        cond3 = V * max(sumVD21 - lamb, 0.0)
     return mask1 * cond1 + mask2 * cond2 + mask3 * cond3
 
 
 def loop(length, latest, direction):
     count = 0
-    if(latest >= length):
-        raise Exception("start should be less than length")
     if(direction == 'right'):
         while(count < length):
             if(latest + count + 1 < length):
@@ -225,12 +205,25 @@ def loop(length, latest, direction):
         raise Exception("please enter left or right")
 
 
+def adam(VW, VU,m_w, m_u, v_w, v_u, beta1, beta2, it, alpha, epison):
+    m_w = beta1 * m_w - (1 - beta1) * VW
+    m_u = beta1 * m_u - (1 - beta1) * VU
+    v_w = beta2 * v_w + (1 - beta2) * (VW**2)
+    v_u = beta2 * v_u + (1 - beta2) * (VU**2)
+    m_w_hat = -m_w / (1 - beta1 ** it)
+    m_u_hat = -m_u / (1 - beta1 ** it)
+    mask_w = np.sign(m_w_hat) * np.sign(VW) > 0
+    mask_u = np.sign(m_u_hat) * np.sign(VU) > 0
+    m_w_hat = m_w_hat * mask_w
+    m_u_hat = m_u_hat * mask_u
+    v_w_hat = v_w / (1 - beta2**it)
+    v_u_hat = v_u / (1 - beta2**it)
+    return m_w, m_u, v_w, v_u, alpha * (m_w_hat / (v_w_hat ** 0.5 + epison)), alpha * (m_u_hat / (v_u_hat  ** 0.5 + epison))
 
 
 ## weight_w, weight_u, s
 def lbfgs(VW, VU, sList_w,sList_u, yList_w, yList_u, k, m, start):
     """
-        两个循环计算下降方向,拟合Hessian矩阵的 逆H 和梯度负方向的乘积，即 -H * f'
     :param feaNum:
     :param gk : matrix, 2m*d
     :param sList:3d*matrix,steps * 2m * d
@@ -241,21 +234,25 @@ def lbfgs(VW, VU, sList_w,sList_u, yList_w, yList_u, k, m, start):
         q_u = np.copy(VU)
         q_w = np.copy(VW)
         # for delta
-        L = k if k <= m else m
+        L = k + 1 if k < m else m
         alphaList = np.zeros(L)
-        roList = np.zeros(L)
+        ro = (yList_w[(start - 1) % m] * sList_w[(start - 1) % m] + yList_u[(start - 1) % m] * sList_u[(start - 1) % m]).sum()
+        print ("ro %f" % ro)
 
         for i in loop(L, start, 'left'):
-            ro = 1 / (yList_w[i] * sList_w[i] + yList_u[i] * sList_u[i]).sum()
-            alpha = ro * (sList_u[i] * q_u + sList_w[i] * q_w).sum()
+            alpha = (sList_u[i] * q_u + sList_w[i] * q_w).sum() / (sList_u[i] * yList_u[i] + sList_w[i] * yList_u[i]).sum()
+            print ("alpha %f" % alpha)
+            if(alpha == np.nan or alpha == np.inf or alpha == -np.inf):
+                return VW, VU
             q_u = q_u - alpha * yList_u[i]
-            q_x = q_x - alpha * yList_x[i]
+            q_w = q_w - alpha * yList_w[i]
             alphaList[i] = alpha
-            roList[i] = ro
+
+        q_u = q_u * ro
+        q_w = q_w * ro
 
         for i in loop(L,start,'right'):
-            ro = roList[i]
-            beta = ro*(yList_u[i] * q_u + yList_w[i] * q_w).sum()
+            beta = (yList_u[i] * q_u + yList_w[i] * q_w).sum() / (sList_u[i] * yList_u[i] + sList_w[i] * yList_u[i]).sum()
             q_u = q_u + (alphaList[i] - beta) * sList_u[i]
             q_w = q_w + (alphaList[i] - beta) * sList_w[i]
 
@@ -268,7 +265,6 @@ def lbfgs(VW, VU, sList_w,sList_u, yList_w, yList_u, k, m, start):
 
 def backTrackingLineSearch(X, y, weight_W, weight_U,norm21, norm1, pW, pU):
     """
-        线性搜索，得到最佳步长并更新权重
     :param it:
     :param oldLoss:
     :param data:
@@ -303,5 +299,3 @@ def fixOrthant(GW, weight_W, new_weight_W):
     mask = (weight_W == 0) * np.sign(GW) + (weight_W != 0) * np.sign(weight_W)
     mask = mask * new_weight_W > 0
     return new_weight_W * mask
-
-
