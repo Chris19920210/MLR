@@ -40,6 +40,7 @@ def sigmoid(z):
     :param z:
     :return:
     """
+    z[z < -5e2] = -5e2
     return 1 / (1 + np.exp(-z))
 
 
@@ -49,6 +50,8 @@ def softmax(x):
     :param x:
     :return:
     """
+    x[x > 5e2] = 5e2
+    x[x < -5e2] = -5e2
     e_x = np.exp(x)
     return e_x / e_x.sum()
 
@@ -70,9 +73,17 @@ def calLoss(X, y, weight_W, weight_U, norm21, norm1):
 def calFunctionLossOne(W_w, W_u, x, y):
     p = mlr(W_w, W_u, x)
     if y == 0:
-        return - np.log(1 - p)
+        if 1 - p < 1e-15:
+            return -np.log(1e-15)
+        else:
+            return - np.log(1 - p)
+        # return - np.log(1 - p)
     else:
-        return - np.log(p)
+        if p < 1e-15:
+            return -np.log(1e-15)
+        else:
+            return - np.log(p)
+        # return - np.log(p)
 
 
 def calFunctionLoss(W_w, W_u, X, y):
@@ -128,7 +139,10 @@ def cal_derivative(W_w, W_u, x, y):
     del ux
     sig = sigmoid(np.dot(W_w, x))
     mlr = np.dot(eux, sig)
-    prob_scalar = - (y - mlr) / (mlr * (1 - mlr))
+    if mlr < 1e-8 or 1 - mlr < 1e-8:
+        prob_scalar = 0.0
+    else:
+        prob_scalar = - (y - mlr) / (mlr * (1 - mlr))
     dir_U = np.outer(prob_scalar * eux * (sig - mlr), x)
     dir_W = np.outer(prob_scalar * sig * (1 - sig) * eux, x)
     return dir_W, dir_U
