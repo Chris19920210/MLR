@@ -2,6 +2,8 @@ import numpy as np
 import copy
 import pickle
 import time
+from sklearn.cross_validation import train_test_split
+from sklearn.metrics import roc_curve,roc_auc_score
 import random
 import logging
 from function import *
@@ -90,7 +92,7 @@ class LSPLM:
             del GW,GU
 
 
-            m_w, m_u, v_w, v_u, PW, PU = adam(newLW, newLU, m_w, m_u, v_w, v_u, self.beta1, self.beta2, it, self.alpha, self.epison)
+            PW, PU = adam(newLW, newLU, m_w, m_u, v_w, v_u, self.beta1, self.beta2, it, self.alpha, self.epison)
 
             new_weight_W, new_weight_U = weight_W + PW, weight_U + PU
 
@@ -145,8 +147,7 @@ class LSPLM:
             pad[:,:-1] = X
             X = pad
             del pad
-        return np.array(map(lambda x: mlr(self.weight_W,self.weight_U,x),X))
-
+        return mlr_total(self.weight_W,self.weight_U,X)
 
     def predict(self, X):
         return np.array(self.predict_proba(X) > 0.5, dtype = int)

@@ -15,6 +15,13 @@ def performance(f):
     return fn
 
 
+def mlr_total(weight_W,weight_U,X):
+    ux = np.dot(X, weight_U.T)
+    e_x = np.exp(ux)
+    e_x = e_x / e_x.sum(axis = 1)[0]
+    sig = sigmoid(np.dot(X, weight_W.T))
+    return (e_x * sig).sum(axis = 1)
+
 # U is 2d-array with 2m*d dimension for each person item tuple of (x, label)
 
 def mlr(W, U, x):
@@ -200,10 +207,10 @@ def loop(length, latest, direction):
 
 
 def adam(VW, VU,m_w, m_u, v_w, v_u, beta1, beta2, it, alpha, epison):
-    m_w = beta1 * m_w - (1 - beta1) * VW
-    m_u = beta1 * m_u - (1 - beta1) * VU
-    v_w = beta2 * v_w + (1 - beta2) * (VW**2)
-    v_u = beta2 * v_u + (1 - beta2) * (VU**2)
+    m_w[::] = (beta1 * m_w - (1 - beta1) * VW)[::]
+    m_u[::] = (beta1 * m_u - (1 - beta1) * VU)[::]
+    v_w[::] = (beta2 * v_w + (1 - beta2) * (VW**2))[::]
+    v_u[::] = (beta2 * v_u + (1 - beta2) * (VU**2))[::]
     m_w_hat = -m_w / (1 - beta1 ** it)
     m_u_hat = -m_u / (1 - beta1 ** it)
     mask_w = np.sign(m_w_hat) * np.sign(VW) > 0
@@ -212,7 +219,7 @@ def adam(VW, VU,m_w, m_u, v_w, v_u, beta1, beta2, it, alpha, epison):
     m_u_hat = m_u_hat * mask_u
     v_w_hat = v_w / (1 - beta2**it)
     v_u_hat = v_u / (1 - beta2**it)
-    return m_w, m_u, v_w, v_u, alpha * (m_w_hat / (v_w_hat ** 0.5 + epison)), alpha * (m_u_hat / (v_u_hat  ** 0.5 + epison))
+    return alpha * (m_w_hat / (v_w_hat ** 0.5 + epison)), alpha * (m_u_hat / (v_u_hat  ** 0.5 + epison))
 
 
 ## weight_w, weight_u, s
