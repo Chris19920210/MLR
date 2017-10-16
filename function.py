@@ -1,7 +1,7 @@
+from __future__ import division
 import numpy as np
 import time
 import copy
-from __future__ import division
 import traceback
 
 # with dense vector negative sample 0, postive sample 1
@@ -83,7 +83,6 @@ def calFunctionLoss(W_w, W_u, X, y):
 
 def calNorm21(weight):
     '''
-        计算norm21
     :param weight:
     :return:
     '''
@@ -91,7 +90,6 @@ def calNorm21(weight):
 
 def calNorm1(weight):
     """
-        计算norm1
     :param weight:
     :return:
     """
@@ -99,7 +97,6 @@ def calNorm1(weight):
 
 def calDimension21(W):
     """
-        计算每一个维度的L2
     :param W:
     :return:{dimension1:std1, dimension2:std2 ......}
     """
@@ -141,15 +138,12 @@ def virtualGradient(WW, WU, GW, GU,beta,lamb):
     :param norm1:
     :return:
     """
-    #计算θ_i·
+
     D21 = calDimension21(WW + WU)
-    #计算v：
     VW = calV(GW, beta)
     VU = calV(GU, beta)
-    #计算v_i·
     VD21 = calDimension21(VW + VU)
     sumVD21 = sum(VD21)
-    #计算d_ij
     DW = calDij(GW, WW, VW, D21, sumVD21, beta, lamb)
     DU = calDij(GU, WU, VU, D21, sumVD21, beta, lamb)
     return DW, DU
