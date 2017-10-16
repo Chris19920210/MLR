@@ -132,9 +132,6 @@ def sumCalDerivative(WW, WU, X, y):
     LW, LU = reduce(lambda x, y: (x[0] + y[0], x[1] + y[1]),all,(0,0))
     return LW, LU
 
-
-
-
 def virtualGradient(WW, WU, GW, GU,beta,lamb):
     """
     :param weight_W:
@@ -176,7 +173,7 @@ def calDij(L, W, V, D21, sumVD21, beta, lamb):
     D21_tmp[D21_tmp == 0] = 1
     s = - L - lamb * W / D21_tmp
     cond1 =  s - beta * np.sign(W)
-    cond2 = np.maximum(np.abs(s) - beta, 0.0)*np.sign(s)
+    cond2 = np.maximum(np.abs(s) - beta, 0.0) * np.sign(s)
     if (sumVD21 != 0 ):
         cond3 = V * (max(sumVD21 - lamb, 0.0) / sumVD21)
     else:
