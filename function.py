@@ -43,6 +43,7 @@ def sigmoid(z):
     :param z:
     :return:
     """
+    z[z < -5e2] = -5e2
     return 1 / (1 + np.exp(-z))
 
 def softmax(x):
@@ -51,6 +52,8 @@ def softmax(x):
     :param x:
     :return:
     """
+    x[x > 5e2] = 5e2
+    x[x < -5e2] = -5e2
     e_x = np.exp(x)
     return e_x / e_x.sum()
 
@@ -70,9 +73,16 @@ def calLoss(X, y, weight_W, weight_U, norm21, norm1):
 def calFunctionLossOne(W_w, W_u,x, y):
     p = mlr(W_w, W_u, x)
     if y == 0:
-        return - np.log(1 - p)
+        if 1 - p < 1e-15:
+            return -np.log(1e-15)
+        else:
+            return - np.log(1 - p)
+        # return - np.log(1 - p)
     else:
-        return - np.log(p)
+        if p < 1e-15:
+            return -np.log(1e-15)
+        else:
+            return - np.log(p)
 
 
 def calFunctionLoss(W_w, W_u, X, y):
