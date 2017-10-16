@@ -23,8 +23,8 @@ class LSPLM:
                  terminate = False
                  ):
         """
-        :param feaNum:  特征数
-        :param classNum:    类别数
+        :param feaNum:
+        :param classNum:
         :param iterNum:
         :param intercept:
         :param memoryNum:
@@ -48,7 +48,6 @@ class LSPLM:
 
     def fit(self,X, y):
         """
-            训练ls-plm large scale piece-wise linear model
         :param data:
         :return:
         """
