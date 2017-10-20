@@ -311,3 +311,14 @@ def fixOrthant(GW, weight_W, new_weight_W):
     mask = (weight_W == 0) * np.sign(GW) + (weight_W != 0) * np.sign(weight_W)
     mask = mask * new_weight_W > 0
     return new_weight_W * mask
+
+def batch_iter(X, y, iter_nums, batch_size, data_size):
+    rounds = int(data_size / batch_size)
+    it = 1
+    while it <= iter_nums:
+        r = (it % rounds) * batch_size
+        r_next = min((it % rounds + 1) * batch_size, data_size)
+        it += 1
+        if(r < r_next):
+            yield X[r:r_next,:], y[r:r_next]
+

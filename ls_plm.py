@@ -16,11 +16,12 @@ class LSPLM:
                  intercept = True,
                  beta1 = 0.1,
                  beta2 = 0.1,
-                 alpha = 0.001,
+                 alpha = 0.01,
                  epison = 10e-8,
                  lamb = 0.1,
                  beta = 0.1,
-                 terminate = False
+                 terminate = False,
+                 batch_size = 100
                  ):
         """
         :param feaNum:
@@ -45,9 +46,11 @@ class LSPLM:
         self.p = 0
         self.terminate = terminate
         self.epison = epison
+        self.batch_size = batch_size
 
     def fit(self,X, y):
         """
+            训练ls-plm large scale piece-wise linear model
         :param data:
         :return:
         """
@@ -82,18 +85,17 @@ class LSPLM:
         loss_best = np.maximum
         best_iter = 0
         optimize_counter = 0
-        while it < self.iterNum:
+        for batch_x, batch_y in batch_iter(X, y, self.iterNum, self.batch_size, self.N):
             print "iter:%d, loss:%s" % (it, loss_before)
             start_time = time.time()
-
-            GW, GU = sumCalDerivative(weight_W, weight_U, X, y)
+            GW, GU = sumCalDerivative(weight_W, weight_U, batch_x, batch_y)
             newLW, newLU = virtualGradient(weight_W, weight_U, GW, GU,self.beta,self.lamb)
             del GW,GU
 
 
             PW, PU = adam(newLW, newLU, m_w, m_u, v_w, v_u, self.beta1, self.beta2, it, self.alpha, self.epison)
 
-            new_weight_W, new_weight_U = weight_W + PW, weight_U + PU
+            new_weight_W, new_weight_U = weight_W + PW , weight_U + PU
 
             del PW, PU
 
@@ -126,11 +128,7 @@ class LSPLM:
             del new_weight_U
             del new_weight_W
             loss_before = loss_now
-
-
             it += 1
-
-
         logging.info("============iterator : %s end ==========" % it)
         print("")
 
